@@ -25,7 +25,7 @@ Do both 1 & 2 using annotated code in a version controlled format]
 ```{r}
 #Loading pwr package
 library(pwr)
-# n=9 for our 9 plots, two tailed
+# Playing with pwr.t.test
 pwr.t.test(n= 9,d=.5,sig.level=0.05, power = NULL, alternative="two.sided", type="two.sample")
 ```
 
