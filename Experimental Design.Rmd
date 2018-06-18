@@ -1,0 +1,53 @@
+---
+title: "Experimental Design"
+author: "Adriana Souza"
+date: "June 15, 2018"
+output:
+   pdf_document:
+      number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part 1 Goals:
+
+## **Constrain treatment number, size and distribution in the context of permitting requirements and logistical matters.**
+
+```{r loading data}
+#plots <- read.csv("plots.csv")
+```
+
+## **Conduct power analysis for deliverables based on proposed experimental design, inventory practices and preliminary data.**^[
+Do both 1 & 2 using annotated code in a version controlled format]
+
+```{r}
+#Loading pwr package
+library(pwr)
+# n=9 for our 9 plots, two tailed
+pwr.t.test(n= 9,d=.5,sig.level=0.05, power = NULL, alternative="two.sided", type="two.sample")
+```
+
+
+# Part 2 Goals:
+
+## Constrain experimental design based on expected mulch volume, permit limits for fill and effective mulch depths
+
+### Estimate total volume of invasive plant biomass on spoil ridges
+### Estimate area corresponding to 25 cubic yards of fill in treatment ditch
+### Estimate depth of remaining mulch spread onto ridges
+### Propose scenarios for removal
+
+# Part 3 Goals:
+
+## Assess adequacy of proposed vegetation inventory elements:
+
+### Element 1: plot size
+
+1. Impact on biomass estimation error
+2. Impact on seedling diversity estimation error
+
+### Element 2: plot distribution per treatment
+
+1. Impact on removal / mulch treatment effect estimation error
