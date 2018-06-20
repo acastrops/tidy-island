@@ -8,46 +8,83 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(kableExtra)
 ```
 
-# Part 1 Goals:
+# Goals 
 
-## **Constrain treatment number, size and distribution in the context of permitting requirements and logistical matters.**
+1. Constrain treatment number, size and distribution in the context of permitting requirements and logistical matters
 
-```{r loading data}
-#plots <- read.csv("plots.csv")
-```
+2. Conduct power analysis for deliverables based on proposed experimental design, inventory practices and preliminary data.
 
-## **Conduct power analysis for deliverables based on proposed experimental design, inventory practices and preliminary data.**^[
-Do both 1 & 2 using annotated code in a version controlled format]
+3. Do both 1 & 2 using annotated code in a version controlled format
 
-```{r}
-#Loading pwr package
-library(pwr)
-# Playing with pwr.t.test
-pwr.t.test(n= 9,d=.5,sig.level=0.05, power = NULL, alternative="two.sided", type="two.sample")
-```
-
-
-# Part 2 Goals:
+# Objectives 
 
 ## Constrain experimental design based on expected mulch volume, permit limits for fill and effective mulch depths
 
-### Estimate total volume of invasive plant biomass on spoil ridges
-### Estimate area corresponding to 25 cubic yards of fill in treatment ditch
-### Estimate depth of remaining mulch spread onto ridges
-### Propose scenarios for removal
+a. Estimate total volume of invasive plant biomass on spoil ridges
 
-# Part 3 Goals:
+```{r total_volume, warning=FALSE, message=FALSE}
+## Reading data
+
+all_plots <- read.csv("plots.csv")
+trees <- read.csv("trees.csv")
+
+## Subsetting
+
+# Subsetting trees to only Australian Pine
+ap <- trees %>% filter(Species == "AP")
+
+# Getting rid of weird formatting error, disregard
+names(ap)[1] <- "PlotID" 
+names(all_plots)[1] <- "PlotID"
+
+# Subsetting Plots to exclude controls
+plots <- subset(all_plots, (PlotID!=c("7", "8","9")))
+
+# Aggregating invasive biomass per plot (note, there is no info for plots 7,8,9)
+ap_agg <- aggregate(ap[, 11], list(ap$PlotID), mean)
+names(ap_agg)[1] <- "PlotID"
+names(ap_agg)[2] <- "PlotBiomass"
+head(ap_agg) # Table
+
+
+## Defining variables
+
+# Plot Area
+sml <- plots$SpoilMoundWidth # Spoil Mound Lenght
+tl <- plots$SpoilMoundTransectLength # Transect Length
+sma <- tl * 4 # Spoil Mound Area
+
+# Invasive Biomass
+ap_density <- 475 # ?? http://www.wood-database.com/austrian-pine/
+invasive_volume <- ap_agg$PlotBiomass * 1/ap_density
+
+# Target: avg_invasive_biomass_per_plot
+target <- invasive_volume/sma
+
+# New table
+target_table <- data.frame(ap_agg, sml, tl, 
+                           sma, invasive_volume, target)
+
+# Table
+target_table %>% 
+  kable("latex", booktabs = TRUE) %>% 
+  kable_styling(latex_options = "striped", "scale_down")
+```
+
+
+b. Estimate area corresponding to 25 cubic yards of fill in treatment ditch
+c. Estimate depth of remaining mulch spread onto ridges
+d. Propose scenarios for removal
 
 ## Assess adequacy of proposed vegetation inventory elements:
 
-### Element 1: plot size
+1. Element 1: plot size
+  * Impact on biomass estimation error
+  * Impact on seedling diversity estimation error
 
-1. Impact on biomass estimation error
-2. Impact on seedling diversity estimation error
-
-### Element 2: plot distribution per treatment
-
-1. Impact on removal / mulch treatment effect estimation error
+2. Element 2: plot distribution per treatment
+  * Impact on removal / mulch treatment effect estimation error
