@@ -138,7 +138,7 @@ sigma_sq <- var(ap_vol_cu_m_per_sq_m_spoil_mound)
 
 # r <- 24
 # n <- 8
-# alpha <- 
+# alpha <- 0.05
 
 #power<- ((r-n)/n)*((sigma_sq*alpha)/effect_size)
 ```
