@@ -27,18 +27,16 @@ library(kableExtra)
 a. Estimate total volume of invasive plant biomass on spoil ridges
 b. Estimate area corresponding to 25 cubic yards of fill in treatment ditch
 c. Estimate depth of remaining mulch spread onto ridges
+d. Propose scenarios for removal
 
 ```{r total_volume, warning=FALSE, message=FALSE}
 ## Reading data
-
 all_plots <- read.csv("plots.csv")
 trees <- read.csv("trees.csv")
 
 ## Subsetting
-
 # Subsetting trees to only Australian Pine
 ap <- trees %>% filter(Species == "AP")
-
 # Getting rid of weird formatting error, disregard
 names(ap)[1] <- "PlotID" 
 names(all_plots)[1] <- "PlotID"
@@ -47,7 +45,8 @@ names(all_plots)[1] <- "PlotID"
 plots <- subset(all_plots, (PlotID!=c("7", "8","9")))
 
 # Aggregating invasive biomass per plot (note, there is no info for plots 7,8,9)
-# ap_agg <- aggregate(ap[, 11], list(ap$PlotID), mean) #The functions that race used were not precise and difficult to connect to volume
+# ap_agg <- aggregate(ap[, 11], list(ap$PlotID), mean) 
+#The functions that race used were not precise and difficult to connect to volume
 # new approach: calculate biomass of trunk, branch and leaves
 # scaling equations following https://doi.org/10.1371/journal.pone.0151858
 
@@ -58,19 +57,25 @@ ap_DBH<-as.numeric(as.character(ap$Width.cm))
 #ap_branch_kg<-exp(-3.945+2.349*log(ap_DBH))
 #ap_leaf_kg<-exp(-4.108+2.270*log(ap_DBH))
 
-#middle forest: most similar based on DBH distribution NOTE: understimate because of missing correction factor
+#middle forest: most similar based on DBH distribution 
+#NOTE: understimate because of missing correction factor
 ap_trunk_kg<-exp(-2.108+2.354*log(ap_DBH))
 ap_branch_kg<-exp(-4.222+2.538*log(ap_DBH))
 ap_leaf_kg<-exp(-3.164+1.996*log(ap_DBH))
 
-# convert wood (trunk and branch) to volume based on standard wood density. http://www.wood-database.com/sheoak/
-ap_wood_vol_cu_m<-c(ap_trunk_kg+ap_branch_kg) / 800 # 800 kg / cubic meter https://www.researchgate.net/publication/230701880_Effects_of_height_on_physical_properties_of_wood_of_Jhau_Casuarina_equisetifolia
+# convert wood (trunk and branch) to volume based on standard wood density. 
+# http://www.wood-database.com/sheoak/
+ap_wood_vol_cu_m<-c(ap_trunk_kg+ap_branch_kg) / 800 
+# 800 kg / cubic meter:
+#https://www.researchgate.net/publication/230701880_Effects_of_height_on_physical_properties_of_wood_of_Jhau_Casuarina_equisetifolia
 
-# convert leaf  to volume based on scaling of Specific Leaf Area Table 1 N2 average drought and control https://onlinelibrary.wiley.com/doi/pdf/10.1046/j.1365-3040.1998.00302.x
+# convert leaf  to volume based on scaling of Specific Leaf Area Table 1 N2 average 
+# drought and control https://onlinelibrary.wiley.com/doi/pdf/10.1046/j.1365-3040.1998.00302.x
 # SLA = 20 sq cm / g ; 
 # area of a cylinder / volume of a cylinder = r/2 leaf diameter = 0.75 
 
-ap_leaf_vol_cu_m<-ap_leaf_kg * 1000 * 20 * (.75 / 4) / 1000000 # 1000 g / kg * 20 sq_cm / g, (0.75 cm / 4 ) cu_cm / sq_cm  / 10^6 cu_cm / cu_m
+ap_leaf_vol_cu_m<-ap_leaf_kg * 1000 * 20 * (.75 / 4) / 1000000 
+# 1000 g / kg * 20 sq_cm / g, (0.75 cm / 4 ) cu_cm / sq_cm  / 10^6 cu_cm / cu_m
 
 ap_vol_cu_m<-ap_leaf_vol_cu_m+ap_wood_vol_cu_m
 
@@ -78,7 +83,7 @@ ap_agg <- aggregate(ap_vol_cu_m, list(ap$PlotID), sum)
 
 names(ap_agg)[1] <- "PlotID"
 names(ap_agg)[2] <- "PlotVolume"
-head(ap_agg) # Table
+#head(ap_agg) # Table
 
 ## Defining variables 
 
@@ -101,14 +106,34 @@ total_invasive_volume_cu_yd<-spoil_ridge_area_sq_m*ap_vol_cu_m_per_sq_m_spoil_mo
 # New table
 target_table <- data.frame(ap_agg, sm_area_sq_m, ap_vol_cu_m_per_sq_m_spoil_mound,
                              total_invasive_volume_cu_yd)
-
-# Table
-target_table %>% 
-  kable("latex", booktabs = TRUE) %>% 
-  kable_styling(latex_options = "striped", "scale_down")
+# target_table %>% 
+#   kable("latex", booktabs = TRUE) %>% 
+#   kable_styling(latex_options = "striped", "scale_down")
 ```
 
-d. Propose scenarios for removal
+```{r sample_size}
+# Calculations using Simple formula for difference in means
+# https://web.stanford.edu/~kcobb/hrp259/lecture11.ppt
+
+#Ratio of larger group to smaller group
+r = 3/1
+
+#Calculating effect size: difference in means
+d <- 0 - mean(ap_vol_cu_m_per_sq_m_spoil_mound)
+
+#Desired power (typically .84 for 80% power)
+Zb <- 0.84
+
+#Desired level of statistical significance (typically 1.96 for alpha = 0.05)
+Za <- 1.96
+
+# Estimate for sigma^2?
+sigma_sq <- var(ap_vol_cu_m_per_sq_m_spoil_mound)
+
+#Sample size calculation
+(sample_size <- ((r+1)/r)*(sigma_sq*(Zb+Za)^2)/d^2)
+
+```
 
 
 ## Assess adequacy of proposed vegetation inventory elements:
