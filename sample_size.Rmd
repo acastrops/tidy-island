@@ -97,7 +97,7 @@ ap_agg <- aggregate(ap_vol_cu_m, list(ap$PlotID), sum)
 
 names(ap_agg)[1] <- "PlotID"
 names(ap_agg)[2] <- "PlotVolume"
-head(ap_agg) # Table
+#head(ap_agg) # Table
 
 ## Defining variables 
 
@@ -132,13 +132,14 @@ sigma_sq <- var(ap_vol_cu_m_per_sq_m_spoil_mound)
 #n_total <- n_control * n_subplots
 
 #control_biomass_mean <- 
-#total_biomass <- 
+total_biomass <- total_invasive_volume_cu_yd
 
 #effect_size <- (total_biomass - control_biomass_mean)/control_biomass_mean
 
 # r <- 24
 # n <- 8
 # alpha <- 0.05
+# beta <- 0.8
 
-#power<- ((r-n)/n)*((sigma_sq*alpha)/effect_size)
+#sample_size <- ((r-n)/n)*((sigma_sq*alpha*beta)/effect_size)
 ```
