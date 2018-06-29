@@ -25,6 +25,8 @@ library(kableExtra)
 ## Constrain experimental design based on expected mulch volume, permit limits for fill and effective mulch depths
 
 a. Estimate total volume of invasive plant biomass on spoil ridges
+b. Estimate area corresponding to 25 cubic yards of fill in treatment ditch
+c. Estimate depth of remaining mulch spread onto ridges
 
 ```{r total_volume, warning=FALSE, message=FALSE}
 ## Reading data
@@ -45,45 +47,69 @@ names(all_plots)[1] <- "PlotID"
 plots <- subset(all_plots, (PlotID!=c("7", "8","9")))
 
 # Aggregating invasive biomass per plot (note, there is no info for plots 7,8,9)
-ap_agg <- aggregate(ap[, 11], list(ap$PlotID), mean)
+# ap_agg <- aggregate(ap[, 11], list(ap$PlotID), mean) #The functions that race used were not precise and difficult to connect to volume
+# new approach: calculate biomass of trunk, branch and leaves
+# scaling equations following https://doi.org/10.1371/journal.pone.0151858
+
+ap_DBH<-as.numeric(as.character(ap$Width.cm))
+
+#mature forest: most similar based on age table 4 eq. 7
+#ap_trunk_kg<-exp(-0.963+2.032*log(ap_DBH))
+#ap_branch_kg<-exp(-3.945+2.349*log(ap_DBH))
+#ap_leaf_kg<-exp(-4.108+2.270*log(ap_DBH))
+
+#middle forest: most similar based on DBH distribution NOTE: understimate because of missing correction factor
+ap_trunk_kg<-exp(-2.108+2.354*log(ap_DBH))
+ap_branch_kg<-exp(-4.222+2.538*log(ap_DBH))
+ap_leaf_kg<-exp(-3.164+1.996*log(ap_DBH))
+
+# convert wood (trunk and branch) to volume based on standard wood density. http://www.wood-database.com/sheoak/
+ap_wood_vol_cu_m<-c(ap_trunk_kg+ap_branch_kg) / 800 # 800 kg / cubic meter https://www.researchgate.net/publication/230701880_Effects_of_height_on_physical_properties_of_wood_of_Jhau_Casuarina_equisetifolia
+
+# convert leaf  to volume based on scaling of Specific Leaf Area Table 1 N2 average drought and control https://onlinelibrary.wiley.com/doi/pdf/10.1046/j.1365-3040.1998.00302.x
+# SLA = 20 sq cm / g ; 
+# area of a cylinder / volume of a cylinder = r/2 leaf diameter = 0.75 
+
+ap_leaf_vol_cu_m<-ap_leaf_kg * 1000 * 20 * (.75 / 4) / 1000000 # 1000 g / kg * 20 sq_cm / g, (0.75 cm / 4 ) cu_cm / sq_cm  / 10^6 cu_cm / cu_m
+
+ap_vol_cu_m<-ap_leaf_vol_cu_m+ap_wood_vol_cu_m
+
+ap_agg <- aggregate(ap_vol_cu_m, list(ap$PlotID), sum) 
+
 names(ap_agg)[1] <- "PlotID"
-names(ap_agg)[2] <- "PlotBiomass"
+names(ap_agg)[2] <- "PlotVolume"
 head(ap_agg) # Table
 
-
-## Defining variables
+## Defining variables 
 
 # Plot Area
-sml <- plots$SpoilMoundWidth # Spoil Mound Lenght
-tl <- plots$SpoilMoundTransectLength # Transect Length
-sma <- tl * 4 # Spoil Mound Area
+#sm_length_m <- plots$SpoilMoundWidth # Spoil Mound Lenght
+trans_len_m <- plots$SpoilMoundTransectLength # Transect Length
+sm_area_sq_m <- trans_len_m * 4 # Spoil Mound Area
 
-# Invasive Biomass
-ap_density <- 475 # ?? http://www.wood-database.com/austrian-pine/
-invasive_volume <- ap_agg$PlotBiomass * 1/ap_density
+# Invasive Biomass original guess
+# ap_density <- 475 # ?? http://www.wood-database.com/austrian-pine/
 
-# Target: avg_invasive_biomass_per_plot
-target <- invasive_volume/sma
+# Target: cubic meters of invasive per meter squared of spoil mound
+ap_vol_cu_m_per_sq_m_spoil_mound <- ap_agg[,2]/sm_area_sq_m
+
+#area of all spoil ridge as per Scheda map * sq_m / acre
+spoil_ridge_area_sq_m<-(3.74+7.56+.17)*4046.86
+
+total_invasive_volume_cu_yd<-spoil_ridge_area_sq_m*ap_vol_cu_m_per_sq_m_spoil_mound*1.30795
 
 # New table
-target_table <- data.frame(ap_agg, sml, tl, 
-                           sma, invasive_volume, target)
+target_table <- data.frame(ap_agg, sm_area_sq_m, ap_vol_cu_m_per_sq_m_spoil_mound,
+                             total_invasive_volume_cu_yd)
 
 # Table
 target_table %>% 
   kable("latex", booktabs = TRUE) %>% 
-  kable_styling(latex_options = "striped", "scale_down") # %>%
-  #footnote(general = "Description of column names (they didn't fit in the page):",
-          # number = c("sml: Spoil Mound Length", 
-                      #"tl: Transect Length", 
-                      #"sma: Spoil Mound Area", 
-                      #"target: Average invasive biomass per plot"))
+  kable_styling(latex_options = "striped", "scale_down")
 ```
 
-
-b. Estimate area corresponding to 25 cubic yards of fill in treatment ditch
-c. Estimate depth of remaining mulch spread onto ridges
 d. Propose scenarios for removal
+
 
 ## Assess adequacy of proposed vegetation inventory elements:
 
@@ -93,3 +119,6 @@ d. Propose scenarios for removal
 
 2. Element 2: plot distribution per treatment
   * Impact on removal / mulch treatment effect estimation error
+
+
+
