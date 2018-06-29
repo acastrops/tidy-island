@@ -72,7 +72,12 @@ target_table <- data.frame(ap_agg, sml, tl,
 # Table
 target_table %>% 
   kable("latex", booktabs = TRUE) %>% 
-  kable_styling(latex_options = "striped", "scale_down")
+  kable_styling(latex_options = "striped", "scale_down") # %>%
+  #footnote(general = "Description of column names (they didn't fit in the page):",
+          # number = c("sml: Spoil Mound Length", 
+                      #"tl: Transect Length", 
+                      #"sma: Spoil Mound Area", 
+                      #"target: Average invasive biomass per plot"))
 ```
 
 
